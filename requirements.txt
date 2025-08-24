@@ -1,0 +1,9 @@
+streamlit
+cohere
+langchain
+langchain-community
+langchain-huggingface
+sentence-transformers
+faiss-cpu
+python-dotenv
+pdfplumber
