@@ -37,10 +37,8 @@ st.markdown(f"""
   }}
   .stApp {{ background-color: {BG}; }}
 
-  /* Hide default streamlit elements */
   #MainMenu, footer, header {{ visibility: hidden; }}
 
-  /* Chat messages */
   [data-testid="stChatMessage"] {{
       background: {SURFACE} !important;
       border: 1px solid {BORDER} !important;
@@ -49,7 +47,6 @@ st.markdown(f"""
       margin-bottom: 12px !important;
   }}
 
-  /* Input box */
   [data-testid="stChatInput"] {{
       background: {SURFACE} !important;
       border: 1px solid {BORDER} !important;
@@ -60,10 +57,8 @@ st.markdown(f"""
       box-shadow: 0 0 0 2px rgba(123, 97, 255, 0.2) !important;
   }}
 
-  /* Spinner */
   .stSpinner > div {{ border-top-color: {ACCENT} !important; }}
 
-  /* Scrollbar */
   ::-webkit-scrollbar {{ width: 4px; }}
   ::-webkit-scrollbar-track {{ background: {BG}; }}
   ::-webkit-scrollbar-thumb {{ background: {BORDER}; border-radius: 4px; }}
@@ -114,31 +109,9 @@ st.markdown(f"""
 <hr style='border-color:{BORDER}; margin: 1.5rem 0;'/>
 """, unsafe_allow_html=True)
 
-# ── Suggested questions ──
+# ── Session state ──
 if "messages" not in st.session_state:
     st.session_state.messages = []
-
-if len(st.session_state.messages) == 0:
-    st.markdown(f"""
-    <p style='font-size:12px; color:{MUTED}; margin-bottom:10px;
-              font-weight:600; text-transform:uppercase;
-              letter-spacing:0.08em'>Try asking</p>
-    """, unsafe_allow_html=True)
-    
-    suggestions = [
-        "What % of adults globally have a bank account?",
-        "Which regions have the lowest financial inclusion?",
-        "How does mobile money impact financial access?",
-        "What barriers prevent women from accessing finance?"
-    ]
-    cols = st.columns(2)
-    for i, s in enumerate(suggestions):
-        with cols[i % 2]:
-            if st.button(s, key=f"suggest_{i}", use_container_width=True):
-                st.session_state.suggested_question = s
-                st.rerun()
-
-st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
 # ── Index loader (silent) ──
 cohere_api_key = os.environ.get("COHERE_API_KEY")
@@ -178,20 +151,42 @@ else:
     embeddings, index = get_index()
     client = cohere.Client(cohere_api_key.strip())
 
+    # ── Suggested questions (only on first load) ──
+    if len(st.session_state.messages) == 0:
+        st.markdown(f"""
+        <p style='font-size:12px; color:{MUTED}; margin-bottom:10px;
+                  font-weight:600; text-transform:uppercase;
+                  letter-spacing:0.08em'>Try asking</p>
+        """, unsafe_allow_html=True)
+
+        suggestions = [
+            "What % of adults globally have a bank account?",
+            "Which regions have the lowest financial inclusion?",
+            "How does mobile money impact financial access?",
+            "What barriers prevent women from accessing finance?"
+        ]
+        cols = st.columns(2)
+        for i, s in enumerate(suggestions):
+            with cols[i % 2]:
+                if st.button(s, key=f"suggest_{i}", use_container_width=True):
+                    st.session_state.suggested_question = s
+                    st.rerun()
+
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+
     # ── Chat history ──
     for message in st.session_state.messages:
         with st.chat_message(message["role"],
                              avatar="👤" if message["role"] == "user" else "💬"):
             st.markdown(message["content"])
 
-    # ── Handle suggested question ──
+    # ── Chat input — always rendered ──
+    question = st.chat_input("Ask anything about financial inclusion...")
+
+    # Override with suggested question if clicked
     if "suggested_question" in st.session_state:
         question = st.session_state.suggested_question
         del st.session_state.suggested_question
-    else:
-        question = st.chat_input(
-            "Ask anything about financial inclusion..."
-        )
 
     if question:
         with st.chat_message("user", avatar="👤"):
@@ -208,7 +203,7 @@ else:
                 )[:4000]
 
                 try:
-                    preamble = "You are a helpful financial literacy chatbot. Answer the question truthfully and based ONLY on the provided financial context."
+                    preamble = "You are a helpful financial literacy chatbot. Answer questions based primarily on the provided financial context. If the exact answer isn't stated but can be reasonably inferred from the data, say so clearly and provide your best estimate. Be concise and conversational — avoid saying you cannot answer unless you truly have no relevant information at all."
                     message_for_api = f"Context: {context}\nQuestion: {question}"
                     response = client.chat(
                         model="command-r-08-2024",
@@ -223,4 +218,4 @@ else:
 
         st.session_state.messages.append(
             {"role": "assistant", "content": answer}
-        )
+        )git add streamlit_app.py qa_bot.py
