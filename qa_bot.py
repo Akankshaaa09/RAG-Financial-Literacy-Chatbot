@@ -42,7 +42,7 @@ while True:
 
     # Generation step: Use the Cohere API with the retrieved context
     try:
-        preamble = "You are a helpful financial literacy chatbot. Answer the question truthfully and based ONLY on the provided financial context."
+        preamble = preamble = "You are a helpful financial literacy chatbot. Answer questions based primarily on the provided financial context. If the exact answer isn't stated but can be reasonably inferred from the data, say so clearly and provide your best estimate. Be concise and conversational — avoid saying you cannot answer unless you truly have no relevant information at all."
         message = f"Context: {context}\nQuestion: {question}"
 
         response = client.chat(
