@@ -85,10 +85,10 @@ st.markdown(f"""
   </p>
   <div style='display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;'>
     <span style='font-size:11px; font-weight:600; padding:3px 10px;
-                 border-radius:20px; background:{SURFACE};
-                 border:1px solid {BORDER}; color:{MUTED}'>
-      LangChain
-    </span>
+             border-radius:20px; background:{SURFACE};
+             border:1px solid {BORDER}; color:{MUTED}'>
+  80% Precision@4
+</span>
     <span style='font-size:11px; font-weight:600; padding:3px 10px;
                  border-radius:20px; background:{SURFACE};
                  border:1px solid {BORDER}; color:{MUTED}'>
@@ -116,7 +116,7 @@ if "messages" not in st.session_state:
 # ── Index loader (silent) ──
 cohere_api_key = os.environ.get("COHERE_API_KEY")
 
-@st.cache_resource(show_spinner=False)
+@st.cache_resource(show_spinner="Loading knowledge base... this takes a few seconds on first load")
 def get_index():
     if not os.path.exists("faiss_index"):
         with open("financial_literacy_data.txt", "r", encoding="utf-8") as f:
