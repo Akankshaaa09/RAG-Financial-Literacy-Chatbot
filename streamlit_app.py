@@ -197,13 +197,13 @@ else:
 
         with st.chat_message("assistant", avatar="💬"):
             with st.spinner("Searching the Findex report..."):
-                docs = index.similarity_search(question, k=2)
+                docs = index.similarity_search(question, k=4)
                 context = " ".join(
                     [doc.page_content for doc in docs]
                 )[:4000]
 
                 try:
-                    preamble = "You are a helpful financial literacy chatbot. Answer questions based primarily on the provided financial context. If the exact answer isn't stated but can be reasonably inferred from the data, say so clearly and provide your best estimate. Be concise and conversational — avoid saying you cannot answer unless you truly have no relevant information at all."
+                    preamble = "You are a helpful financial literacy chatbot. Answer questions using only the provided context. If the context does not contain enough information to answer confidently, say so clearly rather than guessing or inferring beyond what is stated. Be concise and conversational."
                     message_for_api = f"Context: {context}\nQuestion: {question}"
                     response = client.chat(
                         model="command-r-08-2024",
