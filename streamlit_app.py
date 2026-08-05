@@ -99,11 +99,6 @@ st.markdown(f"""
                  border:1px solid {BORDER}; color:{MUTED}'>
       Cohere
     </span>
-    <span style='font-size:11px; font-weight:600; padding:3px 10px;
-                 border-radius:20px; background:{SURFACE};
-                 border:1px solid {BORDER}; color:{MUTED}'>
-      97%+ Retrieval Accuracy
-    </span>
   </div>
 </div>
 <hr style='border-color:{BORDER}; margin: 1.5rem 0;'/>
@@ -191,6 +186,21 @@ else:
     if question:
         with st.chat_message("user", avatar="👤"):
             st.markdown(question)
+
+        # ── Short-term memory: last exchange only, used ONLY to interpret ──
+        # ── follow-up phrasing (pronouns, "what about X") — never as a  ──
+        # ── source of facts. Answers still must come from retrieved     ──
+        # ── context below, so grounding/hallucination-prevention holds. ──
+        history_note = ""
+        if len(st.session_state.messages) >= 2:
+            prev_user = st.session_state.messages[-2]["content"]
+            prev_answer = st.session_state.messages[-1]["content"]
+            history_note = (
+                f"Previous exchange (for context only, not a source of facts):\n"
+                f"User asked: {prev_user}\n"
+                f"You answered: {prev_answer}\n\n"
+            )
+
         st.session_state.messages.append(
             {"role": "user", "content": question}
         )
@@ -203,8 +213,19 @@ else:
                 )[:4000]
 
                 try:
-                    preamble = "You are a helpful financial literacy chatbot. Answer questions using only the provided context. If the context does not contain enough information to answer confidently, say so clearly rather than guessing or inferring beyond what is stated. Be concise and conversational."
-                    message_for_api = f"Context: {context}\nQuestion: {question}"
+                    preamble = (
+                        "You are a helpful financial literacy chatbot. Answer questions "
+                        "using only the provided context. If the context does not contain "
+                        "enough information to answer confidently, say so clearly rather "
+                        "than guessing or inferring beyond what is stated. Be concise and "
+                        "conversational. You may be given a previous exchange — use it only "
+                        "to understand what the current question is referring to (e.g. "
+                        "pronouns or follow-ups like 'what about X'), never as a source of "
+                        "facts for your answer."
+                    )
+                    message_for_api = (
+                        f"{history_note}Context: {context}\nQuestion: {question}"
+                    )
                     response = client.chat(
                         model="command-r-08-2024",
                         message=message_for_api,
@@ -212,6 +233,19 @@ else:
                     )
                     answer = response.text
                     st.markdown(answer)
+
+                    with st.expander("📄 Sources — retrieved passages this answer is grounded in"):
+                        for i, doc in enumerate(docs, 1):
+                            snippet = doc.page_content.strip().replace("\n", " ")
+                            if len(snippet) > 320:
+                                snippet = snippet[:320].rsplit(" ", 1)[0] + "…"
+                            st.markdown(
+                                f"<div style='font-size:12.5px; color:{MUTED}; "
+                                f"border-left:2px solid {BORDER}; padding:4px 10px; "
+                                f"margin-bottom:8px;'><b style='color:{TEXT}'>"
+                                f"Chunk {i}</b><br>{snippet}</div>",
+                                unsafe_allow_html=True,
+                            )
                 except Exception as e:
                     st.error(f"Error calling Cohere API: {e}")
                     answer = "An error occurred."
