@@ -127,4 +127,3 @@ streamlit run streamlit_app.py
 ---
 
 **Akanksha Nayak**
-**Akanksha Nayak**
