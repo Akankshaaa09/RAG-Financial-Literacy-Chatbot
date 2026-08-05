@@ -69,6 +69,20 @@ The system prompt explicitly instructs the model to answer only from retrieved c
 
 ---
 
+## Source Citations
+
+Every answer is shown alongside the retrieved passages that grounded it, in an expandable "Sources" panel — so answers are auditable, not a black box.
+
+---
+
+## Conversation Memory (short-term)
+
+The last exchange (previous question + answer) is passed back into the prompt so natural follow-ups work ("what about in Africa specifically?"). The system prompt explicitly restricts this history to *interpreting* the current question — it is never used as a source of facts, so grounding still comes only from freshly retrieved context each turn.
+
+**Known limitation:** retrieval itself is still based on the raw current question only, not a history-aware reformulation — so a follow-up whose meaning depends heavily on prior context (rather than just a pronoun) may retrieve the wrong passages even though the LLM has the conversation in view. A query-rewriting step before retrieval would be the next improvement here.
+
+---
+
 ## Stack
 
 Python · LangChain · FAISS · HuggingFace Embeddings (all-mpnet-base-v2) · Cohere (command-r-08-2024) · Streamlit
@@ -112,4 +126,5 @@ streamlit run streamlit_app.py
 
 ---
 
+**Akanksha Nayak**
 **Akanksha Nayak**
